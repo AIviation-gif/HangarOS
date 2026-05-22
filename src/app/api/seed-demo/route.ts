@@ -17,11 +17,11 @@ export async function GET() {
 }
 
 async function handler() {
-  const url     = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url     = 'https://biijudfrsisyaukcjdaa.supabase.co'
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!url || !service) {
-    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY ontbreekt.', url: !!url, service: !!service }, { status: 500 })
+  if (!service) {
+    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY ontbreekt in Vercel env vars.' }, { status: 500 })
   }
 
   const supabase = createClient(url, service, {
