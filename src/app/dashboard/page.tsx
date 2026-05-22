@@ -21,13 +21,19 @@ export default async function DashboardPage() {
     { count: reservationCount },
     { count: openDefectCount },
     { count: groundingCount },
+    { data: allAircraft },
   ] = await Promise.all([
     supabase.from('aircraft').select('*', { count: 'exact', head: true }),
     supabase.from('flights').select('*', { count: 'exact', head: true }),
     supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'aangevraagd'),
     supabase.from('defects').select('*', { count: 'exact', head: true }).in('status', ['open', 'in_progress']),
     supabase.from('defects').select('*', { count: 'exact', head: true }).eq('severity', 'grounding').in('status', ['open', 'in_progress']),
+    supabase.from('aircraft').select('total_hours, inspection_interval, hours_at_last_inspection'),
   ])
+
+  const inspectionDueCount = (allAircraft ?? []).filter((a) =>
+    (Number(a.hours_at_last_inspection) + Number(a.inspection_interval)) - Number(a.total_hours) <= 10
+  ).length
 
   const clubName =
     profile?.clubs && !Array.isArray(profile.clubs)
@@ -35,11 +41,12 @@ export default async function DashboardPage() {
       : 'Jouw club'
 
   const stats = [
-    { label: 'Vliegtuigen',         value: aircraftCount  ?? 0, href: '/dashboard/vliegtuigen',   urgent: false },
-    { label: 'Vluchten',            value: flightCount    ?? 0, href: '/dashboard/vluchten',       urgent: false },
-    { label: 'Open reserveringen',  value: reservationCount ?? 0, href: '/dashboard/reserveringen', urgent: false },
-    { label: 'Open defecten',       value: openDefectCount ?? 0, href: '/dashboard/defecten',       urgent: false },
-    { label: 'Groundings',          value: groundingCount ?? 0, href: '/dashboard/defecten',        urgent: (groundingCount ?? 0) > 0 },
+    { label: 'Vliegtuigen',            value: aircraftCount     ?? 0, href: '/dashboard/vliegtuigen',   urgent: false },
+    { label: 'Vluchten',               value: flightCount       ?? 0, href: '/dashboard/vluchten',       urgent: false },
+    { label: 'Open reserveringen',     value: reservationCount  ?? 0, href: '/dashboard/reserveringen',  urgent: false },
+    { label: 'Open defecten',          value: openDefectCount   ?? 0, href: '/dashboard/defecten',       urgent: false },
+    { label: 'Groundings',             value: groundingCount    ?? 0, href: '/dashboard/defecten',       urgent: (groundingCount ?? 0) > 0 },
+    { label: 'Toe aan inspectie (≤10u)', value: inspectionDueCount, href: '/dashboard/vliegtuigen',    urgent: inspectionDueCount > 0 },
   ]
 
   return (

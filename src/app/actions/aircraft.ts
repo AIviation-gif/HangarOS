@@ -62,6 +62,15 @@ export async function updateAircraft(state: AircraftState, formData: FormData): 
   redirect('/dashboard/vliegtuigen')
 }
 
+export async function setAircraftStatus(id: string, status: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+  await supabase.from('aircraft').update({ status }).eq('id', id)
+  revalidatePath('/dashboard/vliegtuigen')
+  revalidatePath(`/dashboard/vliegtuigen/${id}`)
+}
+
 export async function markInspectionDone(id: string) {
   const supabase = await createClient()
 

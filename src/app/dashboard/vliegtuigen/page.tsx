@@ -68,7 +68,9 @@ export default async function VliegtuigenPage() {
                 const badge = inspectionBadge(remaining)
                 return (
                   <tr key={a.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono font-medium">{a.registration}</td>
+                    <td className="px-4 py-3 font-mono font-medium">
+                    <Link href={`/dashboard/vliegtuigen/${a.id}`} className="hover:underline">{a.registration}</Link>
+                  </td>
                     <td className="px-4 py-3 text-gray-700">{a.type}</td>
                     <td className="px-4 py-3 text-gray-700">{Number(a.total_hours).toFixed(1)}</td>
                     <td className="px-4 py-3">

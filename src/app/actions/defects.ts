@@ -42,18 +42,26 @@ export async function addDefect(state: DefectState, formData: FormData): Promise
   const photo    = formData.get('photo') as File
   const photoUrl = await uploadPhoto(photo, profile.club_id)
 
+  const aircraftId = formData.get('aircraft_id') as string
+  const severity   = formData.get('severity') as string
+
   const { error } = await supabase.from('defects').insert({
     club_id:     profile.club_id,
-    aircraft_id: formData.get('aircraft_id') as string,
+    aircraft_id: aircraftId,
     reported_by: user.id,
     description: (formData.get('description') as string).trim(),
-    severity:    formData.get('severity') as string,
+    severity,
     photo_url:   photoUrl,
   })
 
   if (error) return { error: error.message }
 
+  if (severity === 'grounding') {
+    await supabase.from('aircraft').update({ status: 'onderhoud' }).eq('id', aircraftId)
+  }
+
   revalidatePath('/dashboard/defecten')
+  revalidatePath('/dashboard/vliegtuigen')
   redirect('/dashboard/defecten')
 }
 
