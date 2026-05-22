@@ -8,11 +8,20 @@ const DEMO_ACCOUNTS = [
 ]
 
 export async function GET() {
+  try {
+    return await handler()
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: msg, stack: err instanceof Error ? err.stack : undefined }, { status: 500 })
+  }
+}
+
+async function handler() {
   const url     = process.env.NEXT_PUBLIC_SUPABASE_URL
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !service) {
-    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY ontbreekt.' }, { status: 500 })
+    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY ontbreekt.', url: !!url, service: !!service }, { status: 500 })
   }
 
   const supabase = createClient(url, service, {
@@ -85,3 +94,4 @@ export async function GET() {
 
   return NextResponse.json({ ok: true, clubId, results })
 }
+
