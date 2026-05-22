@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, isManager } from '@/lib/auth/get-profile'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -10,18 +11,11 @@ type AircraftState =
   | undefined
 
 export async function addAircraft(state: AircraftState, formData: FormData): Promise<AircraftState> {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+  if (!isManager(profile.role)) return { error: 'Geen toegang. Alleen admins en instructeurs kunnen vliegtuigen toevoegen.' }
+
   const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('club_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) return { error: 'Profiel niet gevonden.' }
 
   const { error } = await supabase.from('aircraft').insert({
     club_id:                  profile.club_id,
@@ -40,11 +34,11 @@ export async function addAircraft(state: AircraftState, formData: FormData): Pro
 }
 
 export async function updateAircraft(state: AircraftState, formData: FormData): Promise<AircraftState> {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+  if (!isManager(profile.role)) return { error: 'Geen toegang. Alleen admins en instructeurs kunnen vliegtuigen bewerken.' }
+
   const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   const id = formData.get('_id') as string
 
   const { error } = await supabase.from('aircraft').update({
@@ -63,19 +57,22 @@ export async function updateAircraft(state: AircraftState, formData: FormData): 
 }
 
 export async function setAircraftStatus(id: string, status: string) {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+  if (!isManager(profile.role)) return
+
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
   await supabase.from('aircraft').update({ status }).eq('id', id)
   revalidatePath('/dashboard/vliegtuigen')
   revalidatePath(`/dashboard/vliegtuigen/${id}`)
 }
 
 export async function markInspectionDone(id: string) {
-  const supabase = await createClient()
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+  if (!isManager(profile.role)) return
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const supabase = await createClient()
 
   const { data: aircraft } = await supabase
     .from('aircraft')
@@ -90,14 +87,15 @@ export async function markInspectionDone(id: string) {
   }).eq('id', id)
 
   revalidatePath('/dashboard/vliegtuigen')
+  revalidatePath(`/dashboard/vliegtuigen/${id}`)
 }
 
 export async function deleteAircraft(id: string) {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+  if (!isManager(profile.role)) return
+
   const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   await supabase.from('aircraft').delete().eq('id', id)
 
   revalidatePath('/dashboard/vliegtuigen')

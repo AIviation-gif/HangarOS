@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, isManager } from '@/lib/auth/get-profile'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PlusIcon } from 'lucide-react'
@@ -24,10 +25,12 @@ function formatDt(iso: string) {
 }
 
 export default async function ReserveringenPage() {
-  const supabase = await createClient()
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const manager = isManager(profile.role)
+
+  const supabase = await createClient()
 
   const { data: reservations } = await supabase
     .from('reservations')
@@ -43,7 +46,7 @@ export default async function ReserveringenPage() {
   const { data: allReservations } = await supabase
     .from('reservations')
     .select(`
-      id, starts_at, ends_at, status,
+      id, starts_at, ends_at, status, member_id,
       aircraft:aircraft_id ( registration ),
       member:member_id ( full_name )
     `)
@@ -93,6 +96,7 @@ export default async function ReserveringenPage() {
                 {allReservations.map((r) => {
                   const aircraft = r.aircraft as unknown as { registration: string } | null
                   const member   = r.member   as unknown as { full_name: string } | null
+                  const canEdit  = manager || r.member_id === profile.id
                   return (
                     <tr key={r.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDt(r.starts_at)}</td>
@@ -105,10 +109,14 @@ export default async function ReserveringenPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right space-x-3">
-                        <Link href={`/dashboard/reserveringen/${r.id}/bewerken`} className="text-blue-600 hover:underline">
-                          Bewerken
-                        </Link>
-                        <DeleteReservationButton id={r.id} />
+                        {canEdit && (
+                          <>
+                            <Link href={`/dashboard/reserveringen/${r.id}/bewerken`} className="text-blue-600 hover:underline">
+                              Bewerken
+                            </Link>
+                            <DeleteReservationButton id={r.id} />
+                          </>
+                        )}
                       </td>
                     </tr>
                   )

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, isManager } from '@/lib/auth/get-profile'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PlusIcon } from 'lucide-react'
@@ -13,15 +14,16 @@ function formatDuration(dep: string, arr: string) {
 }
 
 export default async function VluchtenPage() {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+
+  const manager = isManager(profile.role)
+
   const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   const { data: flights } = await supabase
     .from('flights')
     .select(`
-      id, date, from_icao, to_icao, departure_time, arrival_time, landings, remarks,
+      id, date, from_icao, to_icao, departure_time, arrival_time, landings, remarks, pilot_id,
       aircraft:aircraft_id ( registration ),
       pilot:pilot_id ( full_name ),
       instructor:instructor_id ( full_name )
@@ -63,6 +65,7 @@ export default async function VluchtenPage() {
                 const aircraft   = f.aircraft   as unknown as { registration: string } | null
                 const pilot      = f.pilot      as unknown as { full_name: string } | null
                 const instructor = f.instructor as unknown as { full_name: string } | null
+                const canEdit = manager || f.pilot_id === profile.id
                 return (
                   <tr key={f.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
@@ -83,13 +86,17 @@ export default async function VluchtenPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-700">{f.landings}</td>
                     <td className="px-4 py-3 text-right space-x-3">
-                      <Link
-                        href={`/dashboard/vluchten/${f.id}/bewerken`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        Bewerken
-                      </Link>
-                      <DeleteFlightButton id={f.id} />
+                      {canEdit && (
+                        <>
+                          <Link
+                            href={`/dashboard/vluchten/${f.id}/bewerken`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            Bewerken
+                          </Link>
+                          <DeleteFlightButton id={f.id} />
+                        </>
+                      )}
                     </td>
                   </tr>
                 )

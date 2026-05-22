@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, isManager } from '@/lib/auth/get-profile'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeftIcon, PlusIcon } from 'lucide-react'
@@ -42,10 +43,11 @@ function inspectionInfo(a: { total_hours: number; inspection_interval: number; h
 
 export default async function VliegtuigDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const manager = isManager(profile.role)
+  const supabase = await createClient()
 
   const [{ data: aircraft }, { data: defects }] = await Promise.all([
     supabase.from('aircraft').select('*').eq('id', id).single(),
@@ -72,9 +74,11 @@ export default async function VliegtuigDetailPage({ params }: { params: Promise<
           <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge[aircraft.status]}`}>
             {statusLabel[aircraft.status]}
           </span>
-          <Link href={`/dashboard/vliegtuigen/${id}/bewerken`} className="text-sm text-blue-600 hover:underline ml-auto">
-            Bewerken
-          </Link>
+          {manager && (
+            <Link href={`/dashboard/vliegtuigen/${id}/bewerken`} className="text-sm text-blue-600 hover:underline ml-auto">
+              Bewerken
+            </Link>
+          )}
         </div>
         <p className="text-gray-500 text-sm mt-0.5">{aircraft.type}</p>
       </div>
@@ -97,10 +101,12 @@ export default async function VliegtuigDetailPage({ params }: { params: Promise<
           </div>
         </div>
         <p className={`text-sm ${inspCls}`}>{inspText}</p>
-        <div className="flex gap-2 flex-wrap">
-          <InspectionButton id={id} registration={aircraft.registration} />
-          <StatusActionButton id={id} currentStatus={aircraft.status} />
-        </div>
+        {manager && (
+          <div className="flex gap-2 flex-wrap">
+            <InspectionButton id={id} registration={aircraft.registration} />
+            <StatusActionButton id={id} currentStatus={aircraft.status} />
+          </div>
+        )}
       </div>
 
       {/* Defecten */}

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, isManager } from '@/lib/auth/get-profile'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -56,19 +57,10 @@ async function checkConflicts(
 }
 
 export async function addReservation(state: ReservationState, formData: FormData): Promise<ReservationState> {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+
   const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('club_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) return { error: 'Profiel niet gevonden.' }
-
   const fields = getFields(formData)
 
   if (fields.ends_at <= fields.starts_at) {
@@ -90,13 +82,24 @@ export async function addReservation(state: ReservationState, formData: FormData
 }
 
 export async function updateReservation(state: ReservationState, formData: FormData): Promise<ReservationState> {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+
   const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   const id     = formData.get('_id') as string
   const fields = getFields(formData)
+
+  if (!isManager(profile.role)) {
+    const { data: reservation } = await supabase
+      .from('reservations')
+      .select('member_id')
+      .eq('id', id)
+      .single()
+
+    if (reservation?.member_id !== profile.id) {
+      return { error: 'Geen toegang. Je kunt alleen je eigen reserveringen bewerken.' }
+    }
+  }
 
   if (fields.ends_at <= fields.starts_at) {
     return { error: 'Eindtijd moet na de starttijd liggen.' }
@@ -114,10 +117,20 @@ export async function updateReservation(state: ReservationState, formData: FormD
 }
 
 export async function deleteReservation(id: string) {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!isManager(profile.role)) {
+    const { data: reservation } = await supabase
+      .from('reservations')
+      .select('member_id')
+      .eq('id', id)
+      .single()
+
+    if (reservation?.member_id !== profile.id) return
+  }
 
   await supabase.from('reservations').delete().eq('id', id)
 

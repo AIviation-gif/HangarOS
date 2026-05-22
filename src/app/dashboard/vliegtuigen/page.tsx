@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getProfile, isManager } from '@/lib/auth/get-profile'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PlusIcon } from 'lucide-react'
@@ -24,11 +25,12 @@ function inspectionBadge(remaining: number) {
 }
 
 export default async function VliegtuigenPage() {
+  const profile = await getProfile()
+  if (!profile) redirect('/login')
+
+  const manager = isManager(profile.role)
+
   const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   const { data: aircraft } = await supabase
     .from('aircraft')
     .select('*')
@@ -38,13 +40,15 @@ export default async function VliegtuigenPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Vliegtuigen</h1>
-        <Link
-          href="/dashboard/vliegtuigen/nieuw"
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          <PlusIcon className="h-4 w-4" />
-          Nieuw vliegtuig
-        </Link>
+        {manager && (
+          <Link
+            href="/dashboard/vliegtuigen/nieuw"
+            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Nieuw vliegtuig
+          </Link>
+        )}
       </div>
 
       {!aircraft || aircraft.length === 0 ? (
@@ -69,8 +73,8 @@ export default async function VliegtuigenPage() {
                 return (
                   <tr key={a.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-mono font-medium">
-                    <Link href={`/dashboard/vliegtuigen/${a.id}`} className="hover:underline">{a.registration}</Link>
-                  </td>
+                      <Link href={`/dashboard/vliegtuigen/${a.id}`} className="hover:underline">{a.registration}</Link>
+                    </td>
                     <td className="px-4 py-3 text-gray-700">{a.type}</td>
                     <td className="px-4 py-3 text-gray-700">{Number(a.total_hours).toFixed(1)}</td>
                     <td className="px-4 py-3">
@@ -87,11 +91,15 @@ export default async function VliegtuigenPage() {
                       <Link href={`/dashboard/defecten/nieuw?aircraft_id=${a.id}`} className="text-red-500 hover:underline">
                         Defect
                       </Link>
-                      <InspectionButton id={a.id} registration={a.registration} />
-                      <Link href={`/dashboard/vliegtuigen/${a.id}/bewerken`} className="text-blue-600 hover:underline">
-                        Bewerken
-                      </Link>
-                      <DeleteButton id={a.id} registration={a.registration} />
+                      {manager && (
+                        <>
+                          <InspectionButton id={a.id} registration={a.registration} />
+                          <Link href={`/dashboard/vliegtuigen/${a.id}/bewerken`} className="text-blue-600 hover:underline">
+                            Bewerken
+                          </Link>
+                          <DeleteButton id={a.id} registration={a.registration} />
+                        </>
+                      )}
                     </td>
                   </tr>
                 )
