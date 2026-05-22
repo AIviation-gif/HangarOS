@@ -12,6 +12,8 @@ import {
   Settings,
   LogOut,
   Newspaper,
+  Euro,
+  FolderOpen,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -22,6 +24,8 @@ const nav = [
   { href: '/dashboard/reserveringen', label: 'Reserveringen', icon: CalendarDays },
   { href: '/dashboard/defecten',      label: 'Defecten',      icon: Wrench },
   { href: '/dashboard/blog',          label: 'Blog',          icon: Newspaper },
+  { href: '/dashboard/financien',     label: 'Financiën',     icon: Euro },
+  { href: '/dashboard/documenten',    label: 'Documenten',    icon: FolderOpen },
   { href: '/dashboard/leden',         label: 'Leden',         icon: Users },
   { href: '/dashboard/instellingen',  label: 'Instellingen',  icon: Settings },
 ]

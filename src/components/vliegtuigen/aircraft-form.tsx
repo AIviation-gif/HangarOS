@@ -12,6 +12,7 @@ type Aircraft = {
   status: string
   inspection_interval: number
   hours_at_last_inspection: number
+  hourly_rate: number
 }
 
 type Props = {
@@ -100,6 +101,17 @@ export function AircraftForm({ action, aircraft }: Props) {
         <input
           id="hours_at_last_inspection" name="hours_at_last_inspection" type="number" min="0" step="0.1" required
           defaultValue={aircraft?.hours_at_last_inspection ?? 0}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="hourly_rate" className="block text-sm font-medium text-gray-700 mb-1">
+          Uurtarief (€)
+        </label>
+        <input
+          id="hourly_rate" name="hourly_rate" type="number" min="0" step="0.01"
+          defaultValue={aircraft?.hourly_rate ?? 0}
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

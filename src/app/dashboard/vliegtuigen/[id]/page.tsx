@@ -6,6 +6,7 @@ import { ChevronLeftIcon, PlusIcon } from 'lucide-react'
 import { StatusActionButton } from '@/components/vliegtuigen/status-action-button'
 import { InspectionButton } from '@/components/vliegtuigen/inspection-button'
 import { StatusButton } from '@/components/defecten/status-button'
+import { DocumentSection } from '@/components/documenten/document-section'
 
 const statusBadge: Record<string, string> = {
   beschikbaar:  'bg-green-100 text-green-800',
@@ -49,11 +50,16 @@ export default async function VliegtuigDetailPage({ params }: { params: Promise<
   const manager = isManager(profile.role)
   const supabase = await createClient()
 
-  const [{ data: aircraft }, { data: defects }] = await Promise.all([
+  const [{ data: aircraft }, { data: defects }, { data: documents }] = await Promise.all([
     supabase.from('aircraft').select('*').eq('id', id).single(),
     supabase
       .from('defects')
       .select('id, description, severity, status, photo_url, created_at, reporter:reported_by(full_name)')
+      .eq('aircraft_id', id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('documents')
+      .select('id, name, file_url, created_at')
       .eq('aircraft_id', id)
       .order('created_at', { ascending: false }),
   ])
@@ -160,6 +166,17 @@ export default async function VliegtuigDetailPage({ params }: { params: Promise<
             })}
           </div>
         )}
+      </div>
+
+      {/* Documenten */}
+      <div>
+        <h2 className="font-semibold text-gray-800 mb-3">Documenten</h2>
+        <DocumentSection
+          documents={documents ?? []}
+          category="aircraft"
+          relatedId={id}
+          revalidatePath={`/dashboard/vliegtuigen/${id}`}
+        />
       </div>
     </div>
   )

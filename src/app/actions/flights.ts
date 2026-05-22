@@ -25,15 +25,45 @@ function getFlightFields(formData: FormData) {
   }
 }
 
+function calcDurationHours(dep: string, arr: string): number {
+  const [dh, dm] = dep.split(':').map(Number)
+  const [ah, am] = arr.split(':').map(Number)
+  let mins = (ah * 60 + am) - (dh * 60 + dm)
+  if (mins < 0) mins += 24 * 60
+  return mins / 60
+}
+
+async function calcCost(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  aircraftId: string,
+  depTime: string,
+  arrTime: string
+): Promise<number | null> {
+  const { data } = await supabase
+    .from('aircraft')
+    .select('hourly_rate')
+    .eq('id', aircraftId)
+    .single()
+
+  const rate = Number(data?.hourly_rate ?? 0)
+  if (!rate) return null
+
+  const hours = calcDurationHours(depTime, arrTime)
+  return Math.round(hours * rate * 100) / 100
+}
+
 export async function addFlight(state: FlightState, formData: FormData): Promise<FlightState> {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
   const supabase = await createClient()
+  const fields   = getFlightFields(formData)
+  const cost     = await calcCost(supabase, fields.aircraft_id, fields.departure_time, fields.arrival_time)
 
   const { error } = await supabase.from('flights').insert({
     club_id: profile.club_id,
-    ...getFlightFields(formData),
+    cost,
+    ...fields,
   })
 
   if (error) return { error: error.message }
@@ -47,7 +77,7 @@ export async function updateFlight(state: FlightState, formData: FormData): Prom
   if (!profile) redirect('/login')
 
   const supabase = await createClient()
-  const id = formData.get('_id') as string
+  const id       = formData.get('_id') as string
 
   if (!isManager(profile.role)) {
     const { data: flight } = await supabase
@@ -61,7 +91,10 @@ export async function updateFlight(state: FlightState, formData: FormData): Prom
     }
   }
 
-  const { error } = await supabase.from('flights').update(getFlightFields(formData)).eq('id', id)
+  const fields = getFlightFields(formData)
+  const cost   = await calcCost(supabase, fields.aircraft_id, fields.departure_time, fields.arrival_time)
+
+  const { error } = await supabase.from('flights').update({ ...fields, cost }).eq('id', id)
 
   if (error) return { error: error.message }
 

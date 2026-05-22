@@ -25,6 +25,7 @@ export async function addAircraft(state: AircraftState, formData: FormData): Pro
     status:                   formData.get('status') as string,
     inspection_interval:      parseFloat(formData.get('inspection_interval') as string) || 100,
     hours_at_last_inspection: parseFloat(formData.get('hours_at_last_inspection') as string) || 0,
+    hourly_rate:              parseFloat(formData.get('hourly_rate') as string) || 0,
   })
 
   if (error) return { error: error.message }
@@ -48,6 +49,7 @@ export async function updateAircraft(state: AircraftState, formData: FormData): 
     status:                   formData.get('status') as string,
     inspection_interval:      parseFloat(formData.get('inspection_interval') as string) || 100,
     hours_at_last_inspection: parseFloat(formData.get('hours_at_last_inspection') as string) || 0,
+    hourly_rate:              parseFloat(formData.get('hourly_rate') as string) || 0,
   }).eq('id', id)
 
   if (error) return { error: error.message }

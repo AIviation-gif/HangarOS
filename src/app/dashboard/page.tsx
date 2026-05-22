@@ -23,6 +23,7 @@ export default async function DashboardPage() {
     { count: openDefectCount },
     { count: groundingCount },
     { data: allAircraft },
+    { data: allProfiles },
     { data: recentPosts },
   ] = await Promise.all([
     supabase.from('aircraft').select('*', { count: 'exact', head: true }),
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
     supabase.from('defects').select('*', { count: 'exact', head: true }).in('status', ['open', 'in_progress']),
     supabase.from('defects').select('*', { count: 'exact', head: true }).eq('severity', 'grounding').in('status', ['open', 'in_progress']),
     supabase.from('aircraft').select('total_hours, inspection_interval, hours_at_last_inspection'),
+    supabase.from('profiles').select('medical_expiry, license_expiry'),
     supabase
       .from('posts')
       .select('id, title, content, cover_image_url, published_at, author:author_id ( full_name )')
@@ -42,6 +44,11 @@ export default async function DashboardPage() {
   const inspectionDueCount = (allAircraft ?? []).filter((a) =>
     (Number(a.hours_at_last_inspection) + Number(a.inspection_interval)) - Number(a.total_hours) <= 10
   ).length
+
+  const expiryWarningCount = (allProfiles ?? []).filter((m) => {
+    const check = (d: string | null) => d && Math.ceil((new Date(d).getTime() - Date.now()) / 86400000) <= 60
+    return check(m.medical_expiry) || check(m.license_expiry)
+  }).length
 
   const clubName =
     profile?.clubs && !Array.isArray(profile.clubs)
@@ -55,6 +62,7 @@ export default async function DashboardPage() {
     { label: 'Open defecten',            value: openDefectCount   ?? 0, href: '/dashboard/defecten',       urgent: false },
     { label: 'Groundings',               value: groundingCount    ?? 0, href: '/dashboard/defecten',       urgent: (groundingCount ?? 0) > 0 },
     { label: 'Toe aan inspectie (≤10u)', value: inspectionDueCount,    href: '/dashboard/vliegtuigen',    urgent: inspectionDueCount > 0 },
+    { label: 'Verlopen bevoegdheden',    value: expiryWarningCount,     href: '/dashboard/leden',          urgent: expiryWarningCount > 0 },
   ]
 
   return (
