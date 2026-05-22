@@ -58,39 +58,52 @@ create policy "delete posts" on posts for delete using (
 
 export async function GET() {
   const mgmtToken = process.env.SUPABASE_MANAGEMENT_TOKEN
-  if (!mgmtToken) {
-    return NextResponse.json({ error: 'SUPABASE_MANAGEMENT_TOKEN ontbreekt in Vercel env vars.' }, { status: 500 })
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  const debug = {
+    has_mgmt_token: !!mgmtToken,
+    has_service_key: !!serviceKey,
+    sql: 'not run',
+    bucket: 'not run',
+    sql_detail: null as unknown,
   }
 
   // Run SQL via Management API
-  const sqlRes = await fetch(`https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${mgmtToken}`,
-    },
-    body: JSON.stringify({ query: SQL }),
-  })
-  const sqlBody = await sqlRes.json()
-  if (!sqlRes.ok) {
-    return NextResponse.json({ sql: 'error', detail: sqlBody }, { status: 500 })
+  if (mgmtToken) {
+    try {
+      const sqlRes = await fetch(`https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${mgmtToken}`,
+        },
+        body: JSON.stringify({ query: SQL }),
+      })
+      const sqlBody = await sqlRes.json()
+      debug.sql = sqlRes.ok ? 'ok' : 'error'
+      debug.sql_detail = sqlRes.ok ? null : sqlBody
+    } catch (err) {
+      debug.sql = 'fetch_error'
+      debug.sql_detail = String(err)
+    }
   }
 
-  // Create storage bucket for cover images
-  const supabase = createClient(
-    SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-  const { error: bucketError } = await supabase.storage.createBucket('post-covers', {
-    public: true,
-    fileSizeLimit: 5 * 1024 * 1024,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-  })
-  const bucketStatus =
-    bucketError?.message?.includes('already exists')
-      ? 'already exists'
-      : bucketError ? bucketError.message : 'ok'
+  // Create storage bucket
+  if (serviceKey) {
+    try {
+      const supabase = createClient(SUPABASE_URL, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+      const { error } = await supabase.storage.createBucket('post-covers', {
+        public: true,
+        fileSizeLimit: 5 * 1024 * 1024,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+      })
+      debug.bucket = !error || error.message.includes('already exists') ? 'ok' : error.message
+    } catch (err) {
+      debug.bucket = String(err)
+    }
+  }
 
-  return NextResponse.json({ sql: 'ok', bucket: bucketStatus })
+  return NextResponse.json(debug)
 }
