@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PlusIcon } from 'lucide-react'
 import { DeleteButton } from '@/components/vliegtuigen/delete-button'
+import { InspectionButton } from '@/components/vliegtuigen/inspection-button'
 
 const statusBadge: Record<string, string> = {
   beschikbaar:  'bg-green-100 text-green-800',
@@ -81,6 +82,10 @@ export default async function VliegtuigenPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right space-x-3">
+                      <Link href={`/dashboard/defecten/nieuw?aircraft_id=${a.id}`} className="text-red-500 hover:underline">
+                        Defect
+                      </Link>
+                      <InspectionButton id={a.id} registration={a.registration} />
                       <Link href={`/dashboard/vliegtuigen/${a.id}/bewerken`} className="text-blue-600 hover:underline">
                         Bewerken
                       </Link>

@@ -62,6 +62,27 @@ export async function updateAircraft(state: AircraftState, formData: FormData): 
   redirect('/dashboard/vliegtuigen')
 }
 
+export async function markInspectionDone(id: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: aircraft } = await supabase
+    .from('aircraft')
+    .select('total_hours')
+    .eq('id', id)
+    .single()
+
+  if (!aircraft) return
+
+  await supabase.from('aircraft').update({
+    hours_at_last_inspection: aircraft.total_hours,
+  }).eq('id', id)
+
+  revalidatePath('/dashboard/vliegtuigen')
+}
+
 export async function deleteAircraft(id: string) {
   const supabase = await createClient()
 
