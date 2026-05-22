@@ -24,11 +24,13 @@ export async function addAircraft(state: AircraftState, formData: FormData): Pro
   if (!profile) return { error: 'Profiel niet gevonden.' }
 
   const { error } = await supabase.from('aircraft').insert({
-    club_id:     profile.club_id,
-    registration: (formData.get('registration') as string).trim().toUpperCase(),
-    type:         (formData.get('type') as string).trim(),
-    total_hours:  parseFloat(formData.get('total_hours') as string) || 0,
-    status:       formData.get('status') as string,
+    club_id:                  profile.club_id,
+    registration:             (formData.get('registration') as string).trim().toUpperCase(),
+    type:                     (formData.get('type') as string).trim(),
+    total_hours:              parseFloat(formData.get('total_hours') as string) || 0,
+    status:                   formData.get('status') as string,
+    inspection_interval:      parseFloat(formData.get('inspection_interval') as string) || 100,
+    hours_at_last_inspection: parseFloat(formData.get('hours_at_last_inspection') as string) || 0,
   })
 
   if (error) return { error: error.message }
@@ -46,10 +48,12 @@ export async function updateAircraft(state: AircraftState, formData: FormData): 
   const id = formData.get('_id') as string
 
   const { error } = await supabase.from('aircraft').update({
-    registration: (formData.get('registration') as string).trim().toUpperCase(),
-    type:         (formData.get('type') as string).trim(),
-    total_hours:  parseFloat(formData.get('total_hours') as string) || 0,
-    status:       formData.get('status') as string,
+    registration:             (formData.get('registration') as string).trim().toUpperCase(),
+    type:                     (formData.get('type') as string).trim(),
+    total_hours:              parseFloat(formData.get('total_hours') as string) || 0,
+    status:                   formData.get('status') as string,
+    inspection_interval:      parseFloat(formData.get('inspection_interval') as string) || 100,
+    hours_at_last_inspection: parseFloat(formData.get('hours_at_last_inspection') as string) || 0,
   }).eq('id', id)
 
   if (error) return { error: error.message }

@@ -10,6 +10,8 @@ type Aircraft = {
   type: string
   total_hours: number
   status: string
+  inspection_interval: number
+  hours_at_last_inspection: number
 }
 
 type Props = {
@@ -18,8 +20,8 @@ type Props = {
 }
 
 const statusOptions = [
-  { value: 'beschikbaar', label: 'Beschikbaar' },
-  { value: 'onderhoud',   label: 'Onderhoud' },
+  { value: 'beschikbaar',  label: 'Beschikbaar' },
+  { value: 'onderhoud',    label: 'Onderhoud' },
   { value: 'gereserveerd', label: 'Gereserveerd' },
 ]
 
@@ -37,14 +39,9 @@ export function AircraftForm({ action, aircraft }: Props) {
       )}
 
       <div>
-        <label htmlFor="registration" className="block text-sm font-medium text-gray-700 mb-1">
-          Registratie
-        </label>
+        <label htmlFor="registration" className="block text-sm font-medium text-gray-700 mb-1">Registratie</label>
         <input
-          id="registration"
-          name="registration"
-          type="text"
-          required
+          id="registration" name="registration" type="text" required
           defaultValue={aircraft?.registration ?? ''}
           placeholder="PH-ABC"
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -52,14 +49,9 @@ export function AircraftForm({ action, aircraft }: Props) {
       </div>
 
       <div>
-        <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-          Type
-        </label>
+        <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
         <input
-          id="type"
-          name="type"
-          type="text"
-          required
+          id="type" name="type" type="text" required
           defaultValue={aircraft?.type ?? ''}
           placeholder="Cessna 172"
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -67,28 +59,9 @@ export function AircraftForm({ action, aircraft }: Props) {
       </div>
 
       <div>
-        <label htmlFor="total_hours" className="block text-sm font-medium text-gray-700 mb-1">
-          Totale uren
-        </label>
-        <input
-          id="total_hours"
-          name="total_hours"
-          type="number"
-          min="0"
-          step="0.1"
-          required
-          defaultValue={aircraft?.total_hours ?? 0}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-          Status
-        </label>
+        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
         <select
-          id="status"
-          name="status"
+          id="status" name="status"
           defaultValue={aircraft?.status ?? 'beschikbaar'}
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
@@ -98,9 +71,41 @@ export function AircraftForm({ action, aircraft }: Props) {
         </select>
       </div>
 
+      <hr className="border-gray-100" />
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Onderhoud</p>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="total_hours" className="block text-sm font-medium text-gray-700 mb-1">Totale uren</label>
+          <input
+            id="total_hours" name="total_hours" type="number" min="0" step="0.1" required
+            defaultValue={aircraft?.total_hours ?? 0}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="inspection_interval" className="block text-sm font-medium text-gray-700 mb-1">Inspectie-interval (u)</label>
+          <input
+            id="inspection_interval" name="inspection_interval" type="number" min="1" step="1" required
+            defaultValue={aircraft?.inspection_interval ?? 100}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="hours_at_last_inspection" className="block text-sm font-medium text-gray-700 mb-1">
+          Uren bij laatste inspectie
+        </label>
+        <input
+          id="hours_at_last_inspection" name="hours_at_last_inspection" type="number" min="0" step="0.1" required
+          defaultValue={aircraft?.hours_at_last_inspection ?? 0}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
       <button
-        type="submit"
-        disabled={pending}
+        type="submit" disabled={pending}
         className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
       >
         {pending ? 'Opslaan…' : 'Opslaan'}

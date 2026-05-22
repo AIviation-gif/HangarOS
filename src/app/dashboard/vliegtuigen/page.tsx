@@ -16,6 +16,12 @@ const statusLabel: Record<string, string> = {
   gereserveerd: 'Gereserveerd',
 }
 
+function inspectionBadge(remaining: number) {
+  if (remaining <= 0)  return { label: `${remaining.toFixed(0)}u — vervallen`, cls: 'bg-red-100 text-red-700' }
+  if (remaining <= 10) return { label: `${remaining.toFixed(0)}u resterend`, cls: 'bg-amber-100 text-amber-800' }
+  return { label: `${remaining.toFixed(0)}u resterend`, cls: 'bg-gray-100 text-gray-600' }
+}
+
 export default async function VliegtuigenPage() {
   const supabase = await createClient()
 
@@ -50,32 +56,39 @@ export default async function VliegtuigenPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Registratie</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Type</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Uren</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Inspectie</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {aircraft.map((a) => (
-                <tr key={a.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono font-medium">{a.registration}</td>
-                  <td className="px-4 py-3 text-gray-700">{a.type}</td>
-                  <td className="px-4 py-3 text-gray-700">{Number(a.total_hours).toFixed(1)}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge[a.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {statusLabel[a.status] ?? a.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right space-x-3">
-                    <Link
-                      href={`/dashboard/vliegtuigen/${a.id}/bewerken`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Bewerken
-                    </Link>
-                    <DeleteButton id={a.id} registration={a.registration} />
-                  </td>
-                </tr>
-              ))}
+              {aircraft.map((a) => {
+                const remaining = (Number(a.hours_at_last_inspection) + Number(a.inspection_interval)) - Number(a.total_hours)
+                const badge = inspectionBadge(remaining)
+                return (
+                  <tr key={a.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-mono font-medium">{a.registration}</td>
+                    <td className="px-4 py-3 text-gray-700">{a.type}</td>
+                    <td className="px-4 py-3 text-gray-700">{Number(a.total_hours).toFixed(1)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
+                        {badge.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge[a.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                        {statusLabel[a.status] ?? a.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right space-x-3">
+                      <Link href={`/dashboard/vliegtuigen/${a.id}/bewerken`} className="text-blue-600 hover:underline">
+                        Bewerken
+                      </Link>
+                      <DeleteButton id={a.id} registration={a.registration} />
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
