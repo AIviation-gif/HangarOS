@@ -6,13 +6,18 @@
 - Multi-tenant via `club_id` op elke tabel (RLS later)
 
 ## TODO
-- [ ] Supabase-project aanmaken en URL/key in `.env.local` zetten
-- [ ] SQL-datamodel uitvoeren in Supabase SQL Editor
-- [ ] Deployen op Vercel
+- [x] Supabase-project aanmaken en URL/key in `.env.local` zetten
+- [x] SQL-datamodel uitvoeren in Supabase SQL Editor
+- [x] Deployen op Vercel
+- [ ] Dashboard-layout bouwen
+- [ ] Vliegtuigenbeheer (CRUD)
+- [ ] Vluchtenlogboek
+- [ ] Reserveringen
 
 ## Supabase
-- Project URL: (invullen na aanmaken)
-- Dashboard: https://supabase.com/dashboard
+- Project URL: https://biijudfrsisyaukcjdaa.supabase.co
+- Dashboard: https://supabase.com/dashboard/project/biijudfrsisyaukcjdaa
 
 ## Vercel
-- Project: (invullen na deployen)
+- URL: https://hangar-os-chi.vercel.app
+- Repo: https://github.com/AIviation-gif/HangarOS
