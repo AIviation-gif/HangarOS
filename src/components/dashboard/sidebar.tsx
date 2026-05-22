@@ -7,6 +7,7 @@ import {
   Plane,
   BookOpen,
   CalendarDays,
+  Users,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -17,6 +18,7 @@ const nav = [
   { href: '/dashboard/vliegtuigen',   label: 'Vliegtuigen',   icon: Plane },
   { href: '/dashboard/vluchten',      label: 'Vluchten',      icon: BookOpen },
   { href: '/dashboard/reserveringen', label: 'Reserveringen', icon: CalendarDays },
+  { href: '/dashboard/leden',         label: 'Leden',         icon: Users },
   { href: '/dashboard/instellingen',  label: 'Instellingen',  icon: Settings },
 ]
 
