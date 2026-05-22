@@ -19,6 +19,42 @@ function getFields(formData: FormData) {
   }
 }
 
+async function checkConflicts(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  aircraftId: string,
+  startsAt: string,
+  endsAt: string,
+  excludeId?: string
+) {
+  const { data: aircraft } = await supabase
+    .from('aircraft')
+    .select('registration, status')
+    .eq('id', aircraftId)
+    .single()
+
+  if (aircraft?.status === 'onderhoud') {
+    return `${aircraft.registration} staat aan de grond en kan niet worden geboekt.`
+  }
+
+  let query = supabase
+    .from('reservations')
+    .select('id')
+    .eq('aircraft_id', aircraftId)
+    .neq('status', 'geannuleerd')
+    .lt('starts_at', endsAt)
+    .gt('ends_at', startsAt)
+
+  if (excludeId) query = query.neq('id', excludeId)
+
+  const { data: conflicts } = await query.limit(1)
+
+  if (conflicts && conflicts.length > 0) {
+    return `${aircraft?.registration ?? 'Dit vliegtuig'} is al geboekt in dit tijdvak.`
+  }
+
+  return null
+}
+
 export async function addReservation(state: ReservationState, formData: FormData): Promise<ReservationState> {
   const supabase = await createClient()
 
@@ -34,9 +70,13 @@ export async function addReservation(state: ReservationState, formData: FormData
   if (!profile) return { error: 'Profiel niet gevonden.' }
 
   const fields = getFields(formData)
+
   if (fields.ends_at <= fields.starts_at) {
     return { error: 'Eindtijd moet na de starttijd liggen.' }
   }
+
+  const conflict = await checkConflicts(supabase, fields.aircraft_id, fields.starts_at, fields.ends_at)
+  if (conflict) return { error: conflict }
 
   const { error } = await supabase.from('reservations').insert({
     club_id: profile.club_id,
@@ -55,12 +95,15 @@ export async function updateReservation(state: ReservationState, formData: FormD
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const id = formData.get('_id') as string
+  const id     = formData.get('_id') as string
   const fields = getFields(formData)
 
   if (fields.ends_at <= fields.starts_at) {
     return { error: 'Eindtijd moet na de starttijd liggen.' }
   }
+
+  const conflict = await checkConflicts(supabase, fields.aircraft_id, fields.starts_at, fields.ends_at, id)
+  if (conflict) return { error: conflict }
 
   const { error } = await supabase.from('reservations').update(fields).eq('id', id)
 
