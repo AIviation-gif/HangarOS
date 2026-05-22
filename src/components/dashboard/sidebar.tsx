@@ -11,6 +11,7 @@ import {
   Wrench,
   Settings,
   LogOut,
+  Newspaper,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -20,6 +21,7 @@ const nav = [
   { href: '/dashboard/vluchten',      label: 'Vluchten',      icon: BookOpen },
   { href: '/dashboard/reserveringen', label: 'Reserveringen', icon: CalendarDays },
   { href: '/dashboard/defecten',      label: 'Defecten',      icon: Wrench },
+  { href: '/dashboard/blog',          label: 'Blog',          icon: Newspaper },
   { href: '/dashboard/leden',         label: 'Leden',         icon: Users },
   { href: '/dashboard/instellingen',  label: 'Instellingen',  icon: Settings },
 ]
