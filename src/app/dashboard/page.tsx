@@ -33,7 +33,7 @@ export default async function DashboardPage() {
     supabase.from('aircraft').select('total_hours, inspection_interval, hours_at_last_inspection'),
     supabase
       .from('posts')
-      .select('id, title, cover_image_url, published_at, author:author_id ( full_name )')
+      .select('id, title, content, cover_image_url, published_at, author:author_id ( full_name )')
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .limit(3),
@@ -121,6 +121,9 @@ export default async function DashboardPage() {
                   <div className="px-4 py-3">
                     <p className="font-medium text-zinc-900 leading-snug group-hover:underline line-clamp-2">
                       {p.title}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500 line-clamp-2">
+                      {p.content.replace(/\n+/g, ' ')}
                     </p>
                     <p className="mt-1 text-xs text-zinc-400">
                       {author?.full_name ?? '—'}{date ? ` · ${date}` : ''}

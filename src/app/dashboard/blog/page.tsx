@@ -30,7 +30,7 @@ export default async function BlogPage() {
   const { data: posts } = await supabase
     .from('posts')
     .select(`
-      id, title, cover_image_url, status, published_at, created_at, author_id,
+      id, title, content, cover_image_url, status, published_at, created_at, author_id,
       author:author_id ( full_name )
     `)
     .order('created_at', { ascending: false })
@@ -75,6 +75,9 @@ export default async function BlogPage() {
                       {statusLabel[p.status] ?? p.status}
                     </span>
                   </div>
+                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                    {p.content.replace(/\n+/g, ' ')}
+                  </p>
                   <p className="text-xs text-gray-400 mt-1">
                     {author?.full_name ?? '—'} · {formatDate(date)}
                   </p>
