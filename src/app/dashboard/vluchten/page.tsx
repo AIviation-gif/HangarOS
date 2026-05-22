@@ -60,9 +60,9 @@ export default async function VluchtenPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {flights.map((f) => {
-                const aircraft   = f.aircraft as { registration: string } | null
-                const pilot      = f.pilot    as { full_name: string } | null
-                const instructor = f.instructor as { full_name: string } | null
+                const aircraft   = f.aircraft   as unknown as { registration: string } | null
+                const pilot      = f.pilot      as unknown as { full_name: string } | null
+                const instructor = f.instructor as unknown as { full_name: string } | null
                 return (
                   <tr key={f.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">

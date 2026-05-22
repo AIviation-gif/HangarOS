@@ -68,8 +68,8 @@ export default async function ReserveringenPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {reservations.map((r) => {
-                const aircraft = r.aircraft as { registration: string } | null
-                const member   = r.member   as { full_name: string } | null
+                const aircraft = r.aircraft as unknown as { registration: string } | null
+                const member   = r.member   as unknown as { full_name: string } | null
                 return (
                   <tr key={r.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDt(r.starts_at)}</td>
