@@ -3,7 +3,12 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PlusIcon } from 'lucide-react'
 import { DeleteReservationButton } from '@/components/reserveringen/delete-reservation-button'
-import { WeekCalendar } from '@/components/reserveringen/week-calendar'
+import dynamic from 'next/dynamic'
+
+const WeekCalendar = dynamic(
+  () => import('@/components/reserveringen/week-calendar').then((m) => m.WeekCalendar),
+  { ssr: false, loading: () => <div className="h-64 rounded-lg border border-gray-200 bg-gray-50 animate-pulse" /> }
+)
 
 const statusBadge: Record<string, string> = {
   aangevraagd: 'bg-yellow-100 text-yellow-800',
