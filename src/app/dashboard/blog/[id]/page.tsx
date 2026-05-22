@@ -76,7 +76,7 @@ export default async function BerichtPage({ params }: { params: Promise<{ id: st
       </p>
 
       <div className="mt-6 text-gray-700 leading-relaxed space-y-4">
-        {paragraphs.map((para, i) => (
+        {paragraphs.map((para: string, i: number) => (
           <p key={i} className="whitespace-pre-wrap">{para}</p>
         ))}
       </div>
