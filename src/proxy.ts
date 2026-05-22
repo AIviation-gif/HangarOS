@@ -6,10 +6,19 @@ export async function proxy(request: NextRequest) {
     request: { headers: request.headers },
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Als env vars ontbreken: gewoon doorgaan (login-check via pagina zelf)
+  if (!supabaseUrl || !supabaseKey) {
+    return supabaseResponse;
+  }
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -26,23 +35,25 @@ export async function proxy(request: NextRequest) {
           );
         },
       },
+    });
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { pathname } = request.nextUrl;
+    const publicPaths = ["/login", "/register", "/club"];
+    const isPublic = publicPaths.some((p) => pathname.startsWith(p));
+
+    if (!user && !isPublic) {
+      return NextResponse.redirect(new URL("/login", request.url));
     }
-  );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-  const publicPaths = ["/login", "/register", "/club"];
-  const isPublic = publicPaths.some((p) => pathname.startsWith(p));
-
-  if (!user && !isPublic) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (user && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    if (user && (pathname === "/login" || pathname === "/register")) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  } catch {
+    // Supabase fout: gewoon doorgaan, pagina doet eigen auth-check
   }
 
   return supabaseResponse;
